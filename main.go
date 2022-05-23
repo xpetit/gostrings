@@ -10,6 +10,9 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 func check(err error) {
@@ -35,7 +38,7 @@ func main() {
 	b, err := exec.Command("go", "list", "-f", "{{.Dir}}", "./...").CombinedOutput()
 	check(err)
 	dirs := strings.Split(strings.TrimSpace(string(b)), "\n")
-	m := map[string]struct{}{}
+	m := map[string]int{}
 	for _, dir := range dirs {
 		fset := token.NewFileSet()
 		pkgs, err := parser.ParseDir(fset, dir, nil, 0)
@@ -77,10 +80,7 @@ func main() {
 							s = strings.Join(lines, "\n")
 						}
 						if s != "" {
-							if _, ok := m[s]; !ok {
-								m[s] = struct{}{}
-								fmt.Println(s)
-							}
+							m[s]++
 						}
 						return false
 					}
@@ -89,4 +89,15 @@ func main() {
 			}
 		}
 	}
+	var total int
+	names := maps.Keys(m)
+	for _, v := range m {
+		total += v
+	}
+	width := len(strconv.Itoa(total))
+	slices.Sort(names)
+	for _, name := range names {
+		fmt.Printf("%*d %s\n", width, m[name], name)
+	}
+	fmt.Println(total, "strings")
 }

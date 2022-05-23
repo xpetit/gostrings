@@ -1,7 +1,6 @@
 # gostrings
 
-`gostrings` displays the string literals in non-test Golang source files.
-It doesn't show the imports and struct tags.
+`gostrings` displays the string literals in Golang source files with their number of occurrences.
 
 ## Installation
 
@@ -12,20 +11,32 @@ go install github.com/xpetit/gostrings@latest
 ## Usage
 
 ```shell
-gostrings "$(go env GOROOT)/src/strings"
+gostrings -help
+```
+
+```shell
+gostrings "$(go env GOROOT)/src/os" | sort -n | tail -n 20
 ```
 
 > ```
-> strings.Reader.ReadAt: negative offset
-> strings.Reader.UnreadByte: at beginning of string
-> strings.Reader.UnreadRune: at beginning of string
-> strings.Reader.UnreadRune: previous operation was not ReadRune
-> strings.Reader.Seek: invalid whence
-> strings.Reader.Seek: negative position
-> strings.Reader.WriteTo: invalid WriteString count
-> strings.NewReplacer: odd argument count
-> strings: negative Repeat count
-> strings: Repeat count causes overflow
-> strings: illegal use of non-zero Builder copied by value
-> strings.Builder.Grow: negative count
+>   5 symlink
+>   6 android
+>   6 chdir
+>   6 open
+>   6 plan9
+>   6 readdir
+>   6 stat
+>   6 |0
+>   7 truncate
+>   8 \
+>   8 pipe
+>   8 rename
+>   9 :
+>   9 chmod
+>   9 write
+>   9 |1
+>  13 windows
+>  14 .
+>  16 /
+> 517 strings
 > ```
