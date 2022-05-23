@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -18,8 +19,18 @@ func check(err error) {
 }
 
 func main() {
-	if len(os.Args) == 2 {
-		check(os.Chdir(os.Args[1]))
+	var (
+		tag     bool
+		imports bool
+		tests   bool
+	)
+	flag.BoolVar(&tag, "tag", false, "display struct field tag")
+	flag.BoolVar(&imports, "imports", false, "display imports")
+	flag.BoolVar(&tests, "tests", false, "display tests strings")
+	flag.Parse()
+
+	if flag.NArg() == 1 {
+		check(os.Chdir(flag.Arg(0)))
 	}
 	b, err := exec.Command("go", "list", "-f", "{{.Dir}}", "./...").CombinedOutput()
 	check(err)
@@ -30,19 +41,19 @@ func main() {
 		pkgs, err := parser.ParseDir(fset, dir, nil, 0)
 		check(err)
 		for name, pkg := range pkgs {
-			if strings.HasSuffix(name, "_test") {
+			if !tests && strings.HasSuffix(name, "_test") {
 				continue
 			}
 			for name, file := range pkg.Files {
-				if strings.HasSuffix(name, "_test.go") {
+				if !tests && strings.HasSuffix(name, "_test.go") {
 					continue
 				}
 				ast.Inspect(file, func(n ast.Node) bool {
 					switch x := n.(type) {
-					case
-						*ast.Field,      // skip struct tags
-						*ast.ImportSpec: // skip imports
-						return false
+					case *ast.Field:
+						return tag
+					case *ast.ImportSpec:
+						return imports
 					case *ast.BasicLit:
 						if x.Kind != token.STRING {
 							return false
@@ -55,14 +66,16 @@ func main() {
 							"\n\r", "\n",
 						).Replace(s)
 						s = strings.TrimSpace(s)
-						var lines []string
-						for _, line := range strings.Split(s, "\n") {
-							line = strings.TrimSpace(line)
-							if line != "" {
-								lines = append(lines, line)
+						{
+							var lines []string
+							for _, line := range strings.Split(s, "\n") {
+								line = strings.TrimSpace(line)
+								if line != "" {
+									lines = append(lines, line)
+								}
 							}
+							s = strings.Join(lines, "\n")
 						}
-						s = strings.Join(lines, "\n")
 						if s != "" {
 							if _, ok := m[s]; !ok {
 								m[s] = struct{}{}
